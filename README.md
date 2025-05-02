@@ -15,6 +15,15 @@ A project demonstrating a dialogue flow between a 'student' agent learning a top
    poetry shell
    ```
 
+## Configuration
+
+Agent behavior is configured using YAML files located in the `configs/` directory.
+
+- `expert_config.yaml`: Defines the parameters for the Expert agent (e.g., instructions, model).
+- `student_config.yaml`: Defines the parameters for the Student agent (e.g., instructions, goal, max iterations).
+
+Sample configurations are provided. You can modify these or create new ones to customize the dialogue.
+
 ## Usage
 
 (Instructions to be added)

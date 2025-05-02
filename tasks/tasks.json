@@ -14,7 +14,7 @@
       "id": 2,
       "title": "Implement YAML configuration parser",
       "description": "Create functionality to load and parse YAML configuration files for agents",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         1
       ],

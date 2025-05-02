@@ -1,0 +1,192 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Set up project structure and dependencies",
+      "description": "Initialize the Python project structure and install required dependencies",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "high",
+      "details": "Create a new Python project with appropriate directory structure. Install the openai-agents-python SDK using pip install openai-agents. Also install PyYAML for configuration file parsing. Set up a virtual environment for dependency isolation. Create a basic README.md with project description and setup instructions.",
+      "testStrategy": "Verify all dependencies install correctly and import without errors in a test script."
+    },
+    {
+      "id": 2,
+      "title": "Implement YAML configuration parser",
+      "description": "Create functionality to load and parse YAML configuration files for agents",
+      "status": "pending",
+      "dependencies": [
+        1
+      ],
+      "priority": "high",
+      "details": "Create a module that uses PyYAML to load and validate configuration files. Define schema for both Expert and Student agent configurations including parameters like name, instructions, model, max_tokens, tools for Expert and name, instructions, goal, max_iterations, critique_style, output_type for Student. Implement validation to ensure required fields are present and have appropriate values.",
+      "testStrategy": "Create sample YAML files and verify they load correctly. Test validation by creating files with missing or invalid fields."
+    },
+    {
+      "id": 3,
+      "title": "Implement basic Expert Agent initialization",
+      "description": "Create the Expert Agent using the openai-agents-python SDK",
+      "status": "pending",
+      "dependencies": [
+        2
+      ],
+      "priority": "high",
+      "details": "Using the agents.Agent class from the SDK, implement the Expert Agent initialization. Apply configuration from YAML including name, instructions, model, and max_tokens. Create default expert instructions that emphasize providing authoritative explanations on topics. Do not include tools integration yet (will be added in a later task).",
+      "testStrategy": "Verify the Expert Agent initializes correctly with various configurations. Test that the agent can generate basic responses to test prompts."
+    },
+    {
+      "id": 4,
+      "title": "Implement basic Student Agent initialization",
+      "description": "Create the Student Agent using the openai-agents-python SDK",
+      "status": "pending",
+      "dependencies": [
+        2
+      ],
+      "priority": "high",
+      "details": "Using the agents.Agent class, implement the Student Agent initialization. Apply configuration from YAML including name, instructions, goal, max_iterations, critique_style, and output_type. Create default student instructions that emphasize asking questions to achieve the goal and assessing when the goal has been met. Include logic for the student to determine when its learning goal has been satisfied.",
+      "testStrategy": "Verify the Student Agent initializes correctly with various configurations. Test that the agent can generate appropriate questions based on a goal."
+    },
+    {
+      "id": 5,
+      "title": "Implement basic dialogue runner",
+      "description": "Set up the agents.Runner to manage conversation between Expert and Student",
+      "status": "pending",
+      "dependencies": [
+        3,
+        4
+      ],
+      "priority": "high",
+      "details": "Use the agents.Runner class from the SDK to implement the basic dialogue flow between Expert and Student agents. Initialize the Runner with both agents. Implement the core conversation loop where the Student asks questions and the Expert responds. Start with a simple implementation without termination conditions (will be added in next task).",
+      "testStrategy": "Run a test conversation and verify that messages flow correctly between agents. Check that the conversation history is properly maintained."
+    },
+    {
+      "id": 6,
+      "title": "Implement dialogue termination conditions",
+      "description": "Add logic to end the conversation based on goal satisfaction or max iterations",
+      "status": "pending",
+      "dependencies": [
+        5
+      ],
+      "priority": "high",
+      "details": "Enhance the dialogue runner to terminate the conversation when either: 1) The Student agent indicates its goal has been satisfied (parse this from the Student's output), or 2) The maximum number of iterations (turns) has been reached. Implement a mechanism to extract the Student's assessment of goal completion from its responses, possibly using structured output formats.",
+      "testStrategy": "Test with different goals and verify that conversations terminate appropriately. Test the max_iterations limit by setting it to a low number and confirming the conversation stops."
+    },
+    {
+      "id": 7,
+      "title": "Integrate web_search tool for Expert Agent",
+      "description": "Add the web_search tool to the Expert Agent's capabilities",
+      "status": "pending",
+      "dependencies": [
+        3,
+        "6"
+      ],
+      "priority": "medium",
+      "details": "Enhance the Expert Agent by adding the web_search tool from the SDK. Update the agent initialization to include this tool in its configuration. Modify the Expert's instructions to encourage using the web_search tool when additional information is needed. Ensure proper error handling if the tool is unavailable or fails.",
+      "testStrategy": "Test that the Expert can successfully use the web_search tool to find information. Verify that search results are properly incorporated into responses."
+    },
+    {
+      "id": 8,
+      "title": "Implement transcript generation and storage",
+      "description": "Create functionality to save the complete dialogue transcript to a file",
+      "status": "pending",
+      "dependencies": [
+        6
+      ],
+      "priority": "medium",
+      "details": "Implement functionality to extract the full conversation history from the Runner after dialogue completion. Format the transcript in a readable way, including timestamps, agent names, and message content. Create a file output mechanism that saves the transcript to a specified location with an appropriate filename (including timestamp and goal summary).",
+      "testStrategy": "Run a test conversation and verify that the transcript file is created with the correct content and format."
+    },
+    {
+      "id": 9,
+      "title": "Implement conversation summary generation",
+      "description": "Create functionality to generate and save a concise summary of the conversation",
+      "status": "pending",
+      "dependencies": [
+        8
+      ],
+      "priority": "medium",
+      "details": "Implement a mechanism to generate a concise summary of the conversation. This could use an additional LLM call to summarize the transcript. The summary should highlight key points discussed, whether the goal was achieved, and any important conclusions. Create a file output mechanism to save this summary alongside the transcript.",
+      "testStrategy": "Generate summaries for test conversations and verify they accurately capture the key points and goal achievement status."
+    },
+    {
+      "id": 10,
+      "title": "Implement basic CLI interface",
+      "description": "Create a command-line interface for running the tool",
+      "status": "pending",
+      "dependencies": [
+        6
+      ],
+      "priority": "medium",
+      "details": "Using the argparse library, implement a basic CLI interface that allows users to specify paths to configuration files for both agents. Include options for output file locations. Create a main entry point that parses arguments, loads configurations, initializes agents, runs the dialogue, and generates output files.",
+      "testStrategy": "Test the CLI with various argument combinations to ensure it correctly processes inputs and executes the dialogue."
+    },
+    {
+      "id": 11,
+      "title": "Enhance CLI with additional options",
+      "description": "Add more command-line options for customization and control",
+      "status": "pending",
+      "dependencies": [
+        10
+      ],
+      "priority": "low",
+      "details": "Extend the CLI interface with additional options such as: verbose mode for debugging, option to display conversation in real-time, ability to override specific configuration values from YAML files, and option to specify output directory for transcript and summary files. Update the argument parsing and main execution flow to handle these new options.",
+      "testStrategy": "Test each new CLI option to verify it works as expected and properly overrides configuration values."
+    },
+    {
+      "id": 12,
+      "title": "Implement error handling and logging",
+      "description": "Add robust error handling and logging throughout the application",
+      "status": "pending",
+      "dependencies": [
+        10
+      ],
+      "priority": "medium",
+      "details": "Implement comprehensive error handling for all potential failure points: API errors, configuration issues, file I/O problems, and tool failures. Use Python's logging module to create a structured logging system with different verbosity levels. Ensure user-friendly error messages are displayed in the CLI while detailed logs are saved for debugging.",
+      "testStrategy": "Deliberately trigger various error conditions and verify they are handled gracefully with appropriate messages and logs."
+    },
+    {
+      "id": 13,
+      "title": "Refine agent prompts and behavior",
+      "description": "Optimize the instructions for both agents based on testing",
+      "status": "pending",
+      "dependencies": [
+        6,
+        7
+      ],
+      "priority": "medium",
+      "details": "Based on testing results, refine the default instructions for both Expert and Student agents to improve conversation quality. For the Expert, focus on providing clear, authoritative answers with appropriate use of the web_search tool. For the Student, improve the goal assessment logic and question formulation. Create a set of template instructions that users can customize in their YAML files.",
+      "testStrategy": "Run comparative tests with old and new instructions on the same goals to measure improvement in conversation quality and goal achievement."
+    },
+    {
+      "id": 14,
+      "title": "Create sample configuration files",
+      "description": "Develop a set of example YAML configurations for different scenarios",
+      "status": "pending",
+      "dependencies": [
+        13
+      ],
+      "priority": "low",
+      "details": "Create a collection of sample YAML configuration files for both Expert and Student agents covering different use cases: technical learning, conceptual exploration, problem-solving, etc. Include comments in the YAML files explaining each configuration option. Place these in an 'examples' directory within the project.",
+      "testStrategy": "Verify each example configuration works correctly by running test conversations with them."
+    },
+    {
+      "id": 15,
+      "title": "Package the tool for distribution",
+      "description": "Prepare the project for easy installation and distribution",
+      "status": "pending",
+      "dependencies": [
+        12,
+        14
+      ],
+      "priority": "low",
+      "details": "Create a pyproject.toml file to define the package metadata, dependencies, and entry points. Set up the project structure to be installable via pip. Create a setup.py file if needed for backward compatibility. Include documentation on installation and usage. Consider adding a simple shell script wrapper for easier invocation. Test the package installation in a clean environment.",
+      "testStrategy": "Install the package in a fresh virtual environment and verify all functionality works correctly when invoked through the installed entry points."
+    }
+  ],
+  "metadata": {
+    "projectName": "Student-Expert Dialogue CLI Tool",
+    "totalTasks": 15,
+    "sourceFile": "/Users/lukaszlaszczuk/Personal/coding/student-expert-flow/PRD.txt",
+    "generatedAt": "2023-11-15"
+  }
+}

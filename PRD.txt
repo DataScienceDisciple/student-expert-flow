@@ -1,0 +1,77 @@
+# Overview
+Build a CLI-only Python tool that stages an open-ended Expert ↔ Student dialogue using the **`openai-agents-python`** SDK. The Student agent pursues a user-defined goal, probing the Expert agent until the goal is met or a maximum turn limit is reached. The session output includes the full dialogue transcript and a summary.
+
+# Core Features
+- **Expert Agent:**
+    - Provides authoritative explanations on the chosen topic.
+    - Can optionally use a `web_search` tool (expected to be available via the SDK) to find and cite external sources.
+    - Interacts conversationally, adapting to follow-up questions.
+    - Configurable via YAML (`name`, `instructions`, `model`, `max_tokens`, `tools`).
+- **Student Agent:**
+    - Acts as an inquisitive learner, starting with a user-provided `goal`.
+    - Autonomously assesses if the Expert's response satisfies its goal after each turn (likely driven by its prompt/instructions).
+    - Asks targeted follow-up questions if the goal is not yet met.
+    - Ends the conversation when the goal is satisfied or `max_iterations` is reached.
+    - Configurable via YAML (`name`, `instructions`, `goal`, `max_iterations`, `critique_style`, `output_type`).
+- **Dialogue Management:**
+    - Interaction managed by the `agents.Runner` class from the SDK.
+    - Conversation terminates based on Student's goal satisfaction (interpreted from its output/state) or hitting the `max_iterations` limit configured within the Runner or agent logic.
+- **Output Generation:**
+    - Saves the complete dialogue transcript to a file upon session completion.
+    - Generates and saves a concise summary of the conversation.
+
+# User Experience
+- **Interaction Model:** Command-Line Interface (CLI) only.
+- **Configuration:** Users configure agent behavior (names, prompts, goals, limits, tools) via YAML files.
+- **Initiation:** User starts the tool via the command line, likely pointing to configuration files.
+- **Goal Input:** The Student agent's initial `goal` is specified in its YAML configuration.
+- **Output:** The final transcript and summary files are written to disk in a predictable location.
+
+# Technical Architecture
+- **Language:** Python
+- **Core Library:** **`openai-agents-python`** (install via `pip install openai-agents`)
+- **Interface:** CLI (no GUI required). Standard Python libraries for CLI argument parsing (`argparse`) and file I/O.
+- **Configuration:** YAML files parsed using a library like `PyYAML`, feeding parameters into `agents.Agent` constructor.
+- **Tooling:** Integration with a `web_search` tool for the Expert agent (expected to be configurable within the SDK's `tools` parameter).
+
+# Development Roadmap
+- **MVP:**
+    1.  Basic setup of Expert and Student agents using `agents.Agent`.
+    2.  Implement the core interaction using `agents.Runner`.
+    3.  Implement Student's goal satisfaction check (initially via prompt/instructions).
+    4.  Implement `max_iterations` limit.
+    5.  Basic CLI interaction to start a session with hardcoded configurations.
+    6.  Output the full transcript to the console.
+- **Phase 2:**
+    1.  Refine Student's goal satisfaction logic (potentially using structured `output_type`).
+    2.  Integrate the `web_search` tool for the Expert via the `tools` parameter.
+    3.  Implement file output for the transcript.
+- **Phase 3:**
+    1.  Implement conversation summary generation.
+    2.  Implement file output for the summary.
+    3.  Add error handling and logging.
+    4.  Refine prompts and configuration options based on testing.
+    5.  Package the tool for easier distribution/installation (e.g., using `pyproject.toml` and `pip`).
+
+# Logical Dependency Chain
+1.  **Foundation:** Set up Python project structure, install `openai-agents`.
+2.  **Core Agents:** Define basic Expert and Student `agents.Agent` instances.
+3.  **Dialogue Runner:** Implement the basic interaction flow using `agents.Runner`.
+4.  **Termination Logic:** Add goal satisfaction check and max iteration limit.
+5.  **Configuration:** Integrate YAML loading to configure `agents.Agent`.
+6.  **Tool Integration:** Add `web_search` to the Expert agent's `tools`.
+7.  **Output:** Implement transcript and summary file writing.
+8.  **CLI:** Build user-friendly command-line interface.
+9.  **Packaging:** Prepare for distribution.
+
+# Risks and Mitigations
+- **SDK Limitations/Complexity:** The `openai-agents-python` SDK might have limitations or a steep learning curve. **Mitigation:** Allocate time for thorough SDK documentation review and experimentation. Start with simple examples provided in their repository.
+- **Natural Conversation Flow:** Achieving a natural-feeling dialogue between AI agents can be challenging. **Mitigation:** Careful prompt engineering for both agents. Iterative refinement based on test conversations.
+- **Goal Satisfaction Accuracy:** The Student agent might incorrectly assess goal completion. **Mitigation:** Develop clear criteria within the Student's prompt/logic for satisfaction. Allow for configuration of critique style (`critique_style`).
+- **Tool Reliability/Availability:** The `web_search` tool's effectiveness and availability within the SDK needs confirmation. **Mitigation:** Verify tool availability early. If not built-in, identify alternative implementation or library. Implement robust error handling for tool calls.
+- **API Costs/Limits:** Frequent calls to OpenAI APIs can incur costs and hit rate limits. **Mitigation:** Implement local caching if possible. Monitor usage. Use `max_iterations` to limit session length.
+
+# Appendix
+- **`openai-agents-python` SDK Documentation:** [https://github.com/openai/openai-agents-python](https://github.com/openai/openai-agents-python)
+    - *Note: If clarification is needed on SDK usage, use the Context7 MCP tools (`resolve-library-id` then `get-library-docs` with ID `/openai/openai-agents-python`) to query the documentation.*
+- **YAML Library:** [e.g., PyYAML Documentation: https://pyyaml.org/wiki/PyYAMLDocumentation]

@@ -6,7 +6,7 @@ from typing import List, Optional, Literal
 class ExpertConfig(BaseModel):
     name: str = "Expert"
     instructions: str
-    model: str = "gpt-4o"
+    model: str = "gpt-4.1-mini"
     max_tokens: int = 150
     tools: Optional[List[str]] = None  # Placeholder for now
 
@@ -15,10 +15,10 @@ class StudentConfig(BaseModel):
     name: str = "Student"
     instructions: str
     goal: str
+    model: str = "gpt-4.1-mini"
     max_iterations: int = 10
     critique_style: Literal['constructive',
                             'concise', 'detailed'] = 'constructive'
-    output_type: Literal['text', 'json'] = 'text'
 
 
 def load_config(config_path: str, config_type: Literal['expert', 'student']) -> BaseModel:

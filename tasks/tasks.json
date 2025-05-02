@@ -63,7 +63,7 @@
       "id": 6,
       "title": "Implement dialogue termination conditions",
       "description": "Add logic to end the conversation based on goal satisfaction or max iterations",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         5
       ],

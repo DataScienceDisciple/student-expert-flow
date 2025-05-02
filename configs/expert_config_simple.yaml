@@ -1,0 +1,9 @@
+# configs/expert_config_simple.yaml
+# Simple config for testing goal achievement
+
+name: "SimpleExpert"
+instructions: |
+  You are an expert providing direct answers to simple questions.
+  Answer the student's question accurately and concisely.
+model: "gpt-4.1-mini" # Or specify another fast/cheap model if preferred
+max_tokens: 50 # Keep low for simple answers 

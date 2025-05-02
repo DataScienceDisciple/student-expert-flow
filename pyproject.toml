@@ -9,12 +9,22 @@ readme = "README.md"
 python = "^3.9"
 openai-agents = "^0.0.14"
 pyyaml = "^6.0.2"
+python-dotenv = "^1.1.0"
 
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
 pytest-asyncio = "^0.26.0"
+pytest-mock = "^3.14.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+# Register custom markers
+markers = [
+    "integration: marks tests as integration tests (require API keys, network access)"
+]
+# Configure asyncio mode (optional but recommended by pytest-asyncio warning)
+asyncio_mode = "strict"

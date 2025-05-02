@@ -1,0 +1,14 @@
+# configs/student_config_simple.yaml
+# Simple config for testing goal achievement
+
+name: "SimpleLearner"
+instructions: |
+  You are a student with a very simple question.
+  Your goal is stated below.
+  Ask the expert your question.
+  Assess if the expert's answer directly answers your question and fulfills your goal.
+  Use the required JSON format for your response.
+goal: "What is 2 + 2?"
+model: "gpt-4.1-mini" # Or specify another fast/cheap model if preferred
+max_iterations: 2 # Keep low for this test
+critique_style: "concise" 

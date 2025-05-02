@@ -11,6 +11,9 @@ openai-agents = "^0.0.14"
 pyyaml = "^6.0.2"
 
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

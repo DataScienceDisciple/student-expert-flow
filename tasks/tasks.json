@@ -26,7 +26,7 @@
       "id": 3,
       "title": "Implement basic Expert Agent initialization",
       "description": "Create the Expert Agent using the openai-agents-python SDK",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         2
       ],

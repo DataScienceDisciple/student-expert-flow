@@ -1,5 +1,6 @@
 import json  # Import the json library
-from agents import Agent  # Correct import from the SDK
+# Correct import from the SDK & Add WebSearchTool
+from agents import Agent, WebSearchTool
 from student_expert_flow.config import ExpertConfig, StudentConfig
 # Import the structured output model
 from student_expert_flow.models import StudentOutput
@@ -20,7 +21,8 @@ class ExpertAgent:
         self.agent = Agent(
             name=config.name,
             instructions=effective_instructions,
-            model=config.model
+            model=config.model,
+            tools=[WebSearchTool()]  # Add WebSearchTool here
             # max_tokens might be implicitly handled by the SDK or set elsewhere?
             # For now, we'll omit it unless explicitly required by Agent signature
             # Or perhaps it's part of a ModelSettings object?

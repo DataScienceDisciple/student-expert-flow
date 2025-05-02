@@ -1,0 +1,4 @@
+name: "WebSearchExpert"
+model: "gpt-4.1-mini" # Or fetch from default if needed
+instructions: "You are an expert that uses web search to answer questions accurately about current events or information."
+# max_tokens: 150 # Optional 

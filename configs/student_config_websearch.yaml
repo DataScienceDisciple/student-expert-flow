@@ -1,0 +1,6 @@
+name: "WeatherStudent"
+model: "gpt-4.1-mini"
+goal: "Find out the current weather in London."
+instructions: "Ask the expert what the current weather is like in London. Determine if the answer contains weather information."
+# max_tokens: 150
+max_iterations: 2 

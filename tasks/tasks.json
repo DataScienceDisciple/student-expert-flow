@@ -75,7 +75,7 @@
       "id": 7,
       "title": "Integrate web_search tool for Expert Agent",
       "description": "Add the web_search tool to the Expert Agent's capabilities",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         3,
         "6"

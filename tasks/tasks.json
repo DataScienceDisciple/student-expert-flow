@@ -38,7 +38,7 @@
       "id": 4,
       "title": "Implement basic Student Agent initialization",
       "description": "Create the Student Agent using the openai-agents-python SDK",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         2
       ],

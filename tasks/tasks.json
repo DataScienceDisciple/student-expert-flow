@@ -50,7 +50,7 @@
       "id": 5,
       "title": "Implement basic dialogue runner",
       "description": "Set up the agents.Runner to manage conversation between Expert and Student",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         3,
         4

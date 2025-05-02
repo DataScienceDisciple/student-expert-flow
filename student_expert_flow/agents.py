@@ -88,7 +88,8 @@ class StudentAgent:
             print(
                 f"Student Agent '{self.config.name}' would formulate a question based on:\n{previous_dialogue}")
             # Simulate potentially achieving goal after interaction
-            if "python decorators" in previous_dialogue.lower():  # Simple trigger for testing
+            # Use a specific goal string unlikely to appear in normal config
+            if self.config.goal.lower() == "achieve goal now test string":  # Exact match for testing
                 return "Thanks! I think I understand now. Goal Achieved."
             else:
                 return f"Interesting. Can you tell me more about that? (Goal: {self.config.goal})"

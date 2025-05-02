@@ -3,12 +3,12 @@
     {
       "id": 1,
       "title": "Set up project structure and dependencies",
-      "description": "Initialize the Python project structure and install required dependencies",
-      "status": "pending",
+      "description": "Initialize the Python project structure and install required dependencies using Poetry",
+      "status": "done",
       "dependencies": [],
       "priority": "high",
-      "details": "Create a new Python project with appropriate directory structure. Install the openai-agents-python SDK using pip install openai-agents. Also install PyYAML for configuration file parsing. Set up a virtual environment for dependency isolation. Create a basic README.md with project description and setup instructions.",
-      "testStrategy": "Verify all dependencies install correctly and import without errors in a test script."
+      "details": "Create a new Python project with appropriate directory structure. Initialize Poetry for dependency management using `poetry init`. Add the openai-agents-python SDK using `poetry add openai-agents`. Also add PyYAML for configuration file parsing using `poetry add PyYAML`. Poetry will handle virtual environment creation automatically. Create a basic README.md with project description and setup instructions that include Poetry-specific commands.",
+      "testStrategy": "Verify Poetry setup is correct by running `poetry check`. Ensure all dependencies are properly installed by running `poetry install` and checking they import without errors in a test script using `poetry run python`."
     },
     {
       "id": 2,

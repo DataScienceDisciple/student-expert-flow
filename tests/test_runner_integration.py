@@ -2,6 +2,9 @@ import pytest
 import asyncio
 import os
 from dotenv import load_dotenv
+import glob  # Import glob for finding files
+import time  # Import time for waiting briefly
+from typing import Optional  # Import Optional for type hinting
 
 from student_expert_flow.agents import StudentAgent, ExpertAgent
 from student_expert_flow.config import load_config
@@ -20,6 +23,39 @@ STUDENT_CONFIG_SIMPLE_PATH = "configs/student_config_simple.yaml"
 # Add paths for web search configs
 EXPERT_CONFIG_WEBSEARCH_PATH = "configs/expert_config_websearch.yaml"
 STUDENT_CONFIG_WEBSEARCH_PATH = "configs/student_config_websearch.yaml"
+
+TRANSCRIPT_DIR = "transcripts"
+
+
+def find_latest_transcript(transcript_dir: str = TRANSCRIPT_DIR) -> Optional[str]:
+    """Finds the most recently created transcript file in the directory."""
+    if not os.path.isdir(transcript_dir):
+        return None
+    list_of_files = glob.glob(os.path.join(transcript_dir, 'transcript_*.txt'))
+    if not list_of_files:
+        return None
+    latest_file = max(list_of_files, key=os.path.getctime)
+    return latest_file
+
+# Helper function to assert transcript creation
+
+
+def assert_transcript_created(start_time):
+    """Waits briefly and asserts that a recent transcript file exists."""
+    # Wait a very short time to allow file system to update
+    time.sleep(0.5)
+    latest_transcript = find_latest_transcript()
+    assert latest_transcript is not None, f"No transcript file found in {TRANSCRIPT_DIR}"
+    assert os.path.exists(
+        latest_transcript), f"Latest transcript {latest_transcript} does not exist"
+    # Check if the file was created after the test started (basic check)
+    assert os.path.getctime(
+        latest_transcript) > start_time, "Transcript file seems older than the test run"
+    # Check if the file is not empty
+    assert os.path.getsize(
+        latest_transcript) > 0, f"Transcript file {latest_transcript} is empty"
+    print(
+        f"\n--- Verified Transcript Creation: {os.path.basename(latest_transcript)} ---")
 
 # Marker for integration tests - requires API key and makes real calls
 # Run with: poetry run pytest -m integration
@@ -66,6 +102,9 @@ async def test_run_dialogue_with_api_calls_structured():
     expert = ExpertAgent(expert_config)
     student = StudentAgent(student_config)
 
+    # Record start time
+    start_time = time.time()
+
     # Run the dialogue (real API calls)
     history = await run_dialogue(student, expert, max_turns=test_max_turns)
 
@@ -78,8 +117,8 @@ async def test_run_dialogue_with_api_calls_structured():
     assert len(
         history) <= max_possible_len, f"History should have at most {max_possible_len} entries for {test_max_turns} turn(s)"
 
-    # Check first message role
-    assert history[0]['role'] == 'user' and history[0].get('agent') is None
+    # Check first message role and agent (should be System)
+    assert history[0]['role'] == 'user' and history[0].get('agent') == 'System'
 
     # Check last message properties
     last_message = history[-1]
@@ -89,19 +128,36 @@ async def test_run_dialogue_with_api_calls_structured():
     assert isinstance(last_message['content'], str)
 
     # Check if the stop condition matches the history
-    stopped_early = len(history) < max_possible_len
+    # When max_turns is reached, the loop breaks *after* the final expert turn,
+    # so the length will be 1 (Initial) + max_turns*2 - 1 (E1, S1, E2... EN)
+    expected_len_max_turns = 1 + (test_max_turns * 2) - 1
+    stopped_early = len(history) < expected_len_max_turns
+
     if stopped_early:
         print("\n--- Dialogue stopped early (Goal Achieved) ---")
-        assert last_message['role'] == 'user', "If stopped early, last message should be from student"
-        assert last_message['agent'] == student.config.name
-        assert 'goal_achieved_flag' in last_message, "Student message should have goal flag when stopping early"
-        assert last_message['goal_achieved_flag'] is True, "Goal achieved flag should be True if stopped early"
+        # If stopped early, it must have been after a Student turn indicated goal achieved.
+        # Length should be 1 (Initial) + N*(E+S) where N < test_max_turns
+        assert len(
+            history) % 2 != 0, "History length should be odd if stopped early after student turn"
+        assert history[-1]['role'] == 'user', "If stopped early, last message should be from student"
+        assert history[-1]['agent'] == student.config.name
+        assert 'goal_achieved_flag' in history[-1], "Student message should have goal flag when stopping early"
+        assert history[-1]['goal_achieved_flag'] is True, "Goal achieved flag should be True if stopped early"
     else:
-        print("\n--- Dialogue completed full {test_max_turns} turns ---")
-        assert last_message['role'] == 'assistant', "If ran full turns, last message should be from expert"
-        assert last_message['agent'] == expert.config.name
+        # Max turns reached: loop broke *after* the expert's last turn.
+        expected_len = expected_len_max_turns  # Use calculated expected length
+        assert len(
+            history) == expected_len, f"History length should be {expected_len} when max_turns ({test_max_turns}) reached"
+        print(
+            f"\n--- Dialogue completed full {test_max_turns} turns (stopped after Expert) ---")
+        # If dialogue ran full turns, the loop broke after the *Expert's* last turn.
+        # Therefore, the last message should be from the Expert.
+        assert history[-1]['role'] == 'assistant', "If ran full turns, last message should be from expert"
+        assert history[-1]['agent'] == expert.config.name
+        # No goal flag check needed for the expert message
 
-    print("--- Integration Test Completed Successfully ---")
+    # Assert transcript creation
+    assert_transcript_created(start_time)
 
 
 @pytest.mark.integration
@@ -126,6 +182,9 @@ async def test_run_dialogue_simple_goal_achievement():
     # Initialize agents
     expert = ExpertAgent(expert_config)
     student = StudentAgent(student_config)
+
+    # Record start time
+    start_time = time.time()
 
     # Run the dialogue (real API calls)
     history = await run_dialogue(student, expert, max_turns=test_max_turns)
@@ -154,6 +213,8 @@ async def test_run_dialogue_simple_goal_achievement():
     # assert len(history) < max_possible_len, "Dialogue should have stopped before max_turns"
 
     print("--- Simple Goal Achievement Test Completed Successfully ---")
+    # Assert transcript creation
+    assert_transcript_created(start_time)
 
 
 @pytest.mark.integration
@@ -178,6 +239,9 @@ async def test_run_dialogue_with_web_search():
     expert = ExpertAgent(expert_config)
     student = StudentAgent(student_config)
 
+    # Record start time
+    start_time = time.time()
+
     # Run the dialogue (real API calls)
     # Limit to 2 turns for efficiency. Student asks, Expert answers (hopefully with web search).
     test_max_turns = 2
@@ -187,20 +251,22 @@ async def test_run_dialogue_with_web_search():
     assert isinstance(history, list)
     assert len(
         history) >= 3, "History should have at least the initial msg + 1 turn"
+    # Max possible if student ran last turn
     max_possible_len = 1 + (test_max_turns * 2)
-    # Goal is unlikely to be achieved in 1 turn, so expect full 2 turns (3 or 5 entries)
-    # Initial User Msg -> Student Turn -> Expert Turn -> Student Turn -> Expert Turn
-    # It might finish after student's second turn if goal is achieved.
-    assert len(history) == 5 or (len(history) == 4 and history[-1].get('goal_achieved_flag') is True), \
-        f"History should have 4 (goal achieved) or 5 entries for {test_max_turns} turns, but got {len(history)}"
+    # Expected if max_turns hit (stops after expert)
+    expected_len_max_turns = 1 + (test_max_turns * 2) - 1
 
-    # Find the expert's response (should be the 3rd or 5th entry)
+    # Goal might be achieved in Turn 1 (len 3) or run full turns (len should be expected_len_max_turns)
+    assert len(history) == 3 or len(history) == expected_len_max_turns, \
+        f"History should have 3 (goal achieved T1) or {expected_len_max_turns} (max turns) entries for {test_max_turns} turns, but got {len(history)}"
+
+    # Find the expert's response (should be the 2nd entry - index 1)
     expert_response_entry = None
-    if len(history) >= 3 and history[2].get('agent') == expert.config.name:
-        expert_response_entry = history[2]
-    elif len(history) == 5 and history[4].get('agent') == expert.config.name:
-        # If goal achieved early, expert might not respond last
-        expert_response_entry = history[4]
+    if len(history) >= 2 and history[1].get('agent') == expert.config.name:
+        expert_response_entry = history[1]
+    # No need to check index 4 anymore as we expect it to end early or run full 2 turns
+    # elif len(history) == 5 and history[4].get('agent') == expert.config.name:
+    #     expert_response_entry = history[4]
 
     # Check if the 'used_web_search' flag was set to True in *any* expert turn
     expert_used_search = any(
@@ -225,3 +291,5 @@ async def test_run_dialogue_with_web_search():
     # assert goal_marked_achieved, "Student should ideally mark goal achieved after getting weather info"
 
     print("--- Web Search Test Completed Successfully ---")
+    # Assert transcript creation
+    assert_transcript_created(start_time)

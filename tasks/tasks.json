@@ -88,7 +88,7 @@
       "id": 8,
       "title": "Implement transcript generation and storage",
       "description": "Create functionality to save the complete dialogue transcript to a file",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         6
       ],

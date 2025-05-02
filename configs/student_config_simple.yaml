@@ -7,6 +7,7 @@ instructions: |
   Your goal is stated below.
   Ask the expert your question.
   Assess if the expert's answer directly answers your question and fulfills your goal.
+  If the goal is reached, don't ask any more questions.
   Use the required JSON format for your response.
 goal: "What is 2 + 2?"
 model: "gpt-4.1-mini" # Or specify another fast/cheap model if preferred

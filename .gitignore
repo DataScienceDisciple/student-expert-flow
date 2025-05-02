@@ -6,6 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 dev-debug.log
 __pycache__/
+transcripts/
 # Dependency directories
 node_modules/
 

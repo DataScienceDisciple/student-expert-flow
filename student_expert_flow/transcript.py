@@ -2,12 +2,20 @@ import os
 import datetime
 import re
 from typing import List, Dict, Any
+from openai import OpenAI, OpenAIError, AsyncOpenAI
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Initialize AsyncOpenAI client at module level
+# Relies on OPENAI_API_KEY environment variable
+async_openai_client = AsyncOpenAI()
 
 
 def _sanitize_filename(text: str, max_len: int = 50) -> str:
     """Removes invalid characters and shortens text for use in a filename."""
-    # Remove invalid file system characters
-    sanitized = re.sub(r'[\\/*?:"<>|]', '', text)
+    # Remove invalid file system characters (including dots)
+    sanitized = re.sub(r'[\\/*?:"<>|.]', '', text)
     # Replace spaces with underscores
     sanitized = sanitized.replace(' ', '_')
     # Truncate and remove trailing underscores
@@ -42,12 +50,13 @@ def format_transcript(history: List[Dict[str, Any]], goal: str) -> str:
     return "\n".join(lines)
 
 
-def save_transcript(history: List[Dict[str, Any]], goal: str, output_dir: str = "transcripts") -> str:
+def save_transcript(history: List[Dict[str, Any]], goal: str, formatted_transcript: str, output_dir: str = "transcripts") -> str:
     """Saves the formatted conversation history to a file.
 
     Args:
-        history: The conversation history list.
-        goal: The student's learning goal.
+        history: The conversation history list (used for metadata/unused here but kept for potential future use).
+        goal: The student's learning goal (used for filename).
+        formatted_transcript: The pre-formatted transcript string to save.
         output_dir: The directory to save the transcript in . Defaults to 'transcripts'.
 
     Returns:
@@ -55,9 +64,6 @@ def save_transcript(history: List[Dict[str, Any]], goal: str, output_dir: str = 
     """
     # Ensure the output directory exists
     os.makedirs(output_dir, exist_ok=True)
-
-    # Format the content
-    formatted_content = format_transcript(history, goal)
 
     # Generate filename
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -68,7 +74,7 @@ def save_transcript(history: List[Dict[str, Any]], goal: str, output_dir: str = 
     # Write to file
     try:
         with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(formatted_content)
+            f.write(formatted_transcript)
         # Optional: Log or print confirmation
         print(f"Transcript saved to: {filepath}")
         return filepath
@@ -76,3 +82,48 @@ def save_transcript(history: List[Dict[str, Any]], goal: str, output_dir: str = 
         print(f"Error saving transcript to {filepath}: {e}")
         # Consider raising the exception or returning None depending on desired error handling
         raise  # Re-raise the exception for now
+
+
+async def generate_summary(formatted_transcript: str, model: str = "gpt-4.1-mini") -> str:
+    """Generates a concise summary of the conversation using an LLM call.
+
+    Args:
+        formatted_transcript: The formatted transcript string.
+        model: The OpenAI model to use for summarization.
+
+    Returns:
+        The generated summary text, or an error message if generation failed.
+    """
+    logger.info(f"Generating summary using model: {model}")
+    try:
+        # Use the module-level client instance
+        client = async_openai_client
+
+        system_prompt = ("You are an expert summarizer. Please provide a concise summary of the following conversation transcript. "
+                         "Highlight the main topic or goal, key points discussed, and whether the student's learning goal was achieved."
+                         "Structure it in a way that is easy to read and understand."
+                         "We want to know the main points of the conversation without reading the entire transcript.")
+
+        response = await client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": formatted_transcript}
+            ],
+            temperature=0.7,  # Lower temperature for more focused summary
+        )
+
+        summary = response.choices[0].message.content
+        if not summary:
+            logger.warning("Summary generation returned empty content.")
+            return "[Summary generation failed: Empty content returned]"
+
+        logger.info("Summary generated successfully.")
+        return summary.strip()
+
+    except OpenAIError as e:
+        logger.error(f"OpenAI API error during summary generation: {e}")
+        return f"[Summary generation failed due to API error: {e}]"
+    except Exception as e:
+        logger.error(f"Unexpected error during summary generation: {e}")
+        return f"[Summary generation failed due to unexpected error: {e}]"

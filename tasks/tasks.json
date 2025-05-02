@@ -100,7 +100,7 @@
       "id": 9,
       "title": "Implement conversation summary generation",
       "description": "Create functionality to generate and save a concise summary of the conversation",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         8
       ],

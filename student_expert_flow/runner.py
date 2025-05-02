@@ -1,6 +1,7 @@
 import asyncio  # Import asyncio if we anticipate using Runner.run
 from typing import List, Dict, Any
 import logging
+import os  # Import os for path manipulation
 
 from student_expert_flow.agents import StudentAgent, ExpertAgent
 from agents import Runner, Agent  # Import Runner and base Agent
@@ -15,7 +16,7 @@ from openai.types.responses.response_output_text import (
 # Import the structured output model
 from student_expert_flow.models import StudentOutput
 # Import transcript saving function
-from .transcript import save_transcript
+from .transcript import save_transcript, format_transcript, generate_summary
 
 # Add logger
 logger = logging.getLogger(__name__)
@@ -156,9 +157,34 @@ async def run_dialogue(student: StudentAgent, expert: ExpertAgent, max_turns: in
         )
 
     # --- Save Transcript --- #
+    transcript_path = None  # Initialize path
+    formatted_transcript = ""
     try:
-        transcript_path = save_transcript(full_history, student.config.goal)
+        # Format first, as it's needed for both saving and summarizing
+        formatted_transcript = format_transcript(
+            full_history, student.config.goal)
+        transcript_path = save_transcript(
+            full_history, student.config.goal, formatted_transcript=formatted_transcript)
         logger.info(f"Transcript saved to {transcript_path}")
+
+        # --- Generate and Save Summary --- #
+        if transcript_path and formatted_transcript:
+            try:
+                # Use expert's model for summary
+                summary = await generate_summary(formatted_transcript, model=expert.config.model)
+                summary_filename = os.path.splitext(transcript_path)[
+                    0] + ".summary.txt"
+                with open(summary_filename, 'w', encoding='utf-8') as f:
+                    f.write(summary)
+                logger.info(f"Summary saved to {summary_filename}")
+            except Exception as summary_e:
+                logger.error(
+                    f"Failed to generate or save summary: {summary_e}")
+        else:
+            logger.warning(
+                "Skipping summary generation because transcript saving failed or content was empty.")
+        # --- End Generate and Save Summary --- #
+
     except Exception as e:
         logger.error(f"Failed to save transcript: {e}")
     # --- End Save Transcript ---

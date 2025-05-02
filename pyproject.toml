@@ -10,6 +10,7 @@ python = "^3.9"
 openai-agents = "^0.0.14"
 pyyaml = "^6.0.2"
 python-dotenv = "^1.1.0"
+openai = "^1.77.0"
 
 
 [tool.poetry.group.dev.dependencies]

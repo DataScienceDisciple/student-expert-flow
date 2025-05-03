@@ -124,7 +124,7 @@
       "id": 11,
       "title": "Enhance CLI with additional options",
       "description": "Add more command-line options for customization and control",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         10
       ],
@@ -148,7 +148,7 @@
       "id": 13,
       "title": "Refine agent prompts and behavior",
       "description": "Optimize the instructions for both agents based on testing",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         6,
         7
@@ -161,7 +161,7 @@
       "id": 14,
       "title": "Create sample configuration files",
       "description": "Develop a set of example YAML configurations for different scenarios",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         13
       ],
@@ -173,7 +173,7 @@
       "id": 15,
       "title": "Package the tool for distribution",
       "description": "Prepare the project for easy installation and distribution",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         12,
         14

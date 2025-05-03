@@ -19,10 +19,16 @@ from .transcript import save_transcript, format_transcript, generate_summary
 logger = logging.getLogger(__name__)
 
 
-async def run_dialogue(student: StudentAgent, expert: ExpertAgent, max_turns: int = 5):
+async def run_dialogue(student: StudentAgent, expert: ExpertAgent, max_turns: int = 5, output_dir: str = "transcripts"):
     """Runs a dialogue loop between a Student and an Expert agent using agents.Runner.
 
     The flow is: System Goal -> Expert -> Student -> Expert -> Student ...
+
+    Args:
+        student: The initialized StudentAgent.
+        expert: The initialized ExpertAgent.
+        max_turns: Maximum number of turns for the dialogue.
+        output_dir: Directory to save transcript and summary files.
     """
 
     logger.info(
@@ -175,8 +181,12 @@ async def run_dialogue(student: StudentAgent, expert: ExpertAgent, max_turns: in
         formatted_transcript = format_transcript(
             full_history, student.config.goal)
         transcript_path = save_transcript(
-            full_history, student.config.goal, formatted_transcript=formatted_transcript)
-        logger.info(f"Transcript saved to {transcript_path}")
+            history=full_history,
+            goal=student.config.goal,
+            formatted_transcript=formatted_transcript,
+            output_dir=output_dir
+        )
+        logger.info(f"Transcript saved to Markdown: {transcript_path}")
 
         # --- Generate and Save Summary --- #
         if transcript_path and formatted_transcript:

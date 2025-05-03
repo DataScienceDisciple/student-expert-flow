@@ -27,31 +27,26 @@ STUDENT_CONFIG_WEBSEARCH_PATH = "configs/student_config_websearch.yaml"
 TRANSCRIPT_DIR = "transcripts"
 
 
-def find_latest_transcript(transcript_dir: str = TRANSCRIPT_DIR) -> Optional[str]:
-    """Finds the most recently created transcript file (excluding summaries) in the directory."""
+def find_latest_transcript(transcript_dir: str) -> Optional[str]:
+    """Finds the most recently created transcript file (excluding summaries) in the specified directory."""
     if not os.path.isdir(transcript_dir):
         return None
-    # Get all potentially matching markdown files
     all_files = glob.glob(os.path.join(transcript_dir, 'transcript_*.md'))
-    # Ensure summary files (even if .md) are filtered out if naming convention changes
     transcript_files = [f for f in all_files if not f.endswith(
         '.summary.txt') and not f.endswith('.summary.md')]
-
     if not transcript_files:
         return None
-    # Find the latest among the actual transcript files
     latest_file = max(transcript_files, key=os.path.getctime)
     return latest_file
 
 # Helper function to assert transcript creation
 
 
-def assert_transcript_created(start_time):
-    """Waits briefly and asserts that a recent transcript file exists."""
-    # Wait a very short time to allow file system to update
+def assert_transcript_created(start_time, output_dir: str):
+    """Waits briefly and asserts that a recent transcript file exists in the specified directory."""
     time.sleep(0.5)
-    latest_transcript = find_latest_transcript()
-    assert latest_transcript is not None, f"No transcript file found in {TRANSCRIPT_DIR} matching pattern *.md"
+    latest_transcript = find_latest_transcript(transcript_dir=output_dir)
+    assert latest_transcript is not None, f"No transcript file found in {output_dir} matching pattern *.md"
     assert os.path.exists(
         latest_transcript), f"Latest transcript {latest_transcript} does not exist"
     # Check if the file was created after the test started (basic check)
@@ -87,7 +82,7 @@ def assert_transcript_created(start_time):
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_run_dialogue_with_api_calls_structured():
+async def test_run_dialogue_with_api_calls_structured(tmp_path):
     """Tests the dialogue flow with actual API calls and structured output."""
 
     # Load environment variables from .env file
@@ -121,15 +116,19 @@ async def test_run_dialogue_with_api_calls_structured():
     print(
         f"--- Running integration test for {test_max_turns} turn(s) (Default: 2, Env Var: {os.getenv('INTEGRATION_MAX_TURNS')}) ---")
 
-    # Initialize agents (SDK should now pick up key from environment)
+    # Define output dir for this test
+    test_output_dir = tmp_path / "structured_output"
+    os.makedirs(test_output_dir, exist_ok=True)
+
+    # Initialize agents
     expert = ExpertAgent(expert_config)
     student = StudentAgent(student_config)
 
     # Record start time
     start_time = time.time()
 
-    # Run the dialogue (real API calls)
-    history = await run_dialogue(student, expert, max_turns=test_max_turns)
+    # Run the dialogue (real API calls), passing the output directory
+    history = await run_dialogue(student, expert, max_turns=test_max_turns, output_dir=str(test_output_dir))
 
     # --- Assertions ---
     # Check basic structure
@@ -179,13 +178,13 @@ async def test_run_dialogue_with_api_calls_structured():
         assert history[-1]['agent'] == expert.config.name
         # No goal flag check needed for the expert message
 
-    # Assert transcript creation
-    assert_transcript_created(start_time)
+    # Assert transcript creation in the correct directory
+    assert_transcript_created(start_time, output_dir=str(test_output_dir))
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_run_dialogue_simple_goal_achievement():
+async def test_run_dialogue_simple_goal_achievement(tmp_path):
     """Tests goal achievement with simple configs (requires API key)."""
     load_dotenv(override=True)
     api_key = os.getenv("OPENAI_API_KEY")
@@ -202,6 +201,10 @@ async def test_run_dialogue_simple_goal_achievement():
     student_config = load_config(STUDENT_CONFIG_SIMPLE_PATH, 'student')
     test_max_turns = 2  # Should finish in 1-2 turns
 
+    # Define output dir for this test
+    test_output_dir = tmp_path / "simple_goal"
+    os.makedirs(test_output_dir, exist_ok=True)
+
     # Initialize agents
     expert = ExpertAgent(expert_config)
     student = StudentAgent(student_config)
@@ -210,7 +213,7 @@ async def test_run_dialogue_simple_goal_achievement():
     start_time = time.time()
 
     # Run the dialogue (real API calls)
-    history = await run_dialogue(student, expert, max_turns=test_max_turns)
+    history = await run_dialogue(student, expert, max_turns=test_max_turns, output_dir=str(test_output_dir))
 
     # --- Assertions ---
     assert isinstance(history, list)
@@ -236,13 +239,13 @@ async def test_run_dialogue_simple_goal_achievement():
     # assert len(history) < max_possible_len, "Dialogue should have stopped before max_turns"
 
     print("--- Simple Goal Achievement Test Completed Successfully ---")
-    # Assert transcript creation
-    assert_transcript_created(start_time)
+    # Assert transcript creation in the correct directory
+    assert_transcript_created(start_time, output_dir=str(test_output_dir))
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_run_dialogue_with_web_search():
+async def test_run_dialogue_with_web_search(tmp_path):
     """Tests the dialogue flow with web search (requires API key)."""
     load_dotenv(override=True)
     api_key = os.getenv("OPENAI_API_KEY")
@@ -258,6 +261,10 @@ async def test_run_dialogue_with_web_search():
     expert_config = load_config(EXPERT_CONFIG_WEBSEARCH_PATH, 'expert')
     student_config = load_config(STUDENT_CONFIG_WEBSEARCH_PATH, 'student')
 
+    # Define output dir for this test
+    test_output_dir = tmp_path / "web_search"
+    os.makedirs(test_output_dir, exist_ok=True)
+
     # Initialize agents
     expert = ExpertAgent(expert_config)
     student = StudentAgent(student_config)
@@ -266,9 +273,8 @@ async def test_run_dialogue_with_web_search():
     start_time = time.time()
 
     # Run the dialogue (real API calls)
-    # Limit to 2 turns for efficiency. Student asks, Expert answers (hopefully with web search).
     test_max_turns = 2
-    history = await run_dialogue(student, expert, max_turns=test_max_turns)
+    history = await run_dialogue(student, expert, max_turns=test_max_turns, output_dir=str(test_output_dir))
 
     # --- Assertions ---
     assert isinstance(history, list)
@@ -314,5 +320,5 @@ async def test_run_dialogue_with_web_search():
     # assert goal_marked_achieved, "Student should ideally mark goal achieved after getting weather info"
 
     print("--- Web Search Test Completed Successfully ---")
-    # Assert transcript creation
-    assert_transcript_created(start_time)
+    # Assert transcript creation in the correct directory
+    assert_transcript_created(start_time, output_dir=str(test_output_dir))

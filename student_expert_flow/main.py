@@ -65,7 +65,7 @@ async def async_main():
 
         # 3. Run Dialogue
         logger.info(f"Starting dialogue with max turns: {args.max_turns}")
-        await run_dialogue(student, expert, max_turns=args.max_turns)
+        await run_dialogue(student, expert, max_turns=args.max_turns, output_dir=args.output_dir)
         # The run_dialogue function now handles transcript/summary saving.
         # We might need to pass args.output_dir into it later if we centralize output path handling.
 

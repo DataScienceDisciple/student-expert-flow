@@ -1,5 +1,5 @@
 import pytest
-from student_expert_flow.agents import ExpertAgent, StudentAgent
+from student_expert_flow.participants import ExpertAgent, StudentAgent
 from student_expert_flow.config import load_config, ExpertConfig, StudentConfig
 from agents import Agent  # Import the base Agent from SDK for type checking
 

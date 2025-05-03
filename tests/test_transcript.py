@@ -40,7 +40,7 @@ def test_sanitize_filename():
 
 
 def test_save_transcript(tmp_path):
-    """Tests saving a transcript to a temporary directory."""
+    """Tests saving a transcript to a temporary directory in Markdown format."""
     output_dir = tmp_path / "test_transcripts"
 
     # Run the function - Pass the formatted transcript
@@ -52,24 +52,30 @@ def test_save_transcript(tmp_path):
     assert os.path.exists(saved_path)
     assert str(output_dir) in saved_path
 
-    # 2. Check filename format (timestamp part is tricky, focus on prefix and sanitized goal)
+    # 2. Check filename format (now expecting .md)
     filename = os.path.basename(saved_path)
     sanitized_goal_part = _sanitize_filename(MOCK_GOAL)
-    # Regex to match: transcript_YYYYMMDD_HHMMSS_sanitizedgoal.txt
+    # Regex to match: transcript_YYYYMMDD_HHMMSS_sanitizedgoal.md
     assert re.match(
-        rf"transcript_\d{{8}}_\d{{6}}_{re.escape(sanitized_goal_part)}\.txt", filename)
+        rf"transcript_\d{{8}}_\d{{6}}_{re.escape(sanitized_goal_part)}\.md", filename), \
+        f"Filename '{filename}' did not match expected pattern."
 
-    # 3. Read the content and check key elements
+    # 3. Read the content and check key elements using Markdown format
     with open(saved_path, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    assert "--- Conversation Transcript ---" in content
-    assert f"Goal: {MOCK_GOAL}" in content
-    assert "Timestamp:" in content
-    assert "[StudentA (user)]: Question 1" in content
-    assert "[ExpertB (assistant)]: Answer 1 [Used Web Search: False]" in content
-    assert "[ExpertB (assistant)]: Answer 2 with citation [Used Web Search: True]" in content
+    # Check Markdown elements
+    assert "# Conversation Transcript" in content
+    assert f"## Goal\n> {MOCK_GOAL}" in content
+    assert "## Timestamp\n>" in content
+    assert "## Turn 1" in content
+    assert "**[StudentA (user)]**\n> Question 1" in content
+    assert "**[ExpertB (assistant)]**\n> Answer 1" in content
+    assert "*Used Web Search: False*" in content  # Check metadata format
+    assert "**[ExpertB (assistant)]**\n> Answer 2 with citation" in content
+    assert "*Used Web Search: True*" in content  # Check metadata format
     assert "--- End Transcript ---" in content
+    assert "---" in content  # Check for separators
 
 
 @pytest.mark.asyncio

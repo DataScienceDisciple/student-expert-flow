@@ -1,0 +1,12 @@
+name: AI_Newsletter_Creator
+model: gpt-4.1
+
+goal: >
+  Receive a curated topic idea and a first draft of a newsletter issue
+  focused on recent AI news (last week or two).
+
+instructions: >
+  Create a newsletter issue about top AI news this week.
+
+max_iterations: 7
+# output_type is implicitly handled by StudentAgent initialization using StudentOutput 

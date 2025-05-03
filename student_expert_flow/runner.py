@@ -3,16 +3,13 @@ from typing import List, Dict, Any
 import logging
 import os  # Import os for path manipulation
 
-from student_expert_flow.agents import StudentAgent, ExpertAgent
+from student_expert_flow.participants import StudentAgent, ExpertAgent
 from agents import Runner, Agent  # Import Runner and base Agent
 # Import the specific result type for type hinting
 from agents.result import RunResult
 # Import item and response types needed for checking citations/tool calls
-from agents.items import MessageOutputItem, ToolCallItem
-from openai.types.responses.response_output_text import (
-    ResponseOutputText,
-    AnnotationURLCitation,
-)
+from agents.items import ToolCallItem
+
 # Import the structured output model
 from student_expert_flow.models import StudentOutput
 # Import transcript saving function
@@ -85,7 +82,13 @@ async def run_dialogue(student: StudentAgent, expert: ExpertAgent, max_turns: in
                 {"role": "assistant", "agent": expert.config.name, "content": expert_response, "used_web_search": expert_used_web_search_this_turn})
 
             # Prepare input for the student turn
+            # Get history including the expert's assistant-role response
             conversation_input = expert_result.to_input_list()
+            # **Architect Fix 2 (Revised):** Append the Expert's text response as a new user message
+            # This avoids mutating the role/content type of the SDK-generated item.
+            if expert_response:  # Avoid adding empty messages
+                conversation_input.append(
+                    {"role": "user", "content": expert_response})
 
         except Exception as e:
             logger.error(f"Error during Expert turn {current_turn}: {e}")
@@ -129,10 +132,13 @@ async def run_dialogue(student: StudentAgent, expert: ExpertAgent, max_turns: in
                 {"role": "user", "agent": student.config.name, "content": student_response_content, "goal_achieved_flag": goal_achieved})
 
             # Prepare input for the next expert turn
+            # Get the history list including the student's assistant-role structured output
             conversation_input = student_result.to_input_list()
-            # Optionally add student's text response as a new user message if needed for clarity,
-            # but to_input_list() should include the assistant message which contains it.
-            # conversation_input.append({ "role": "user", "content": student_response_content })
+            # **Architect Fix:** Explicitly add the student's text response as a user message
+            # This ensures the Expert agent sees the student's last message as user input.
+            if student_response_content:  # Avoid adding empty messages
+                conversation_input.append(
+                    {"role": "user", "content": student_response_content})
 
         except Exception as e:
             logger.error(f"Error during Student turn {current_turn}: {e}")

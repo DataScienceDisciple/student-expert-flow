@@ -5,6 +5,9 @@ description = ""
 authors = ["Luke Skyward <luke.skyward.ai@gmail.com>"]
 readme = "README.md"
 
+[tool.poetry.scripts]
+student-expert-flow = "student_expert_flow.main:main"
+
 [tool.poetry.dependencies]
 python = "^3.9"
 openai-agents = "^0.0.14"

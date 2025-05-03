@@ -6,7 +6,7 @@ import glob  # Import glob for finding files
 import time  # Import time for waiting briefly
 from typing import Optional  # Import Optional for type hinting
 
-from student_expert_flow.agents import StudentAgent, ExpertAgent
+from student_expert_flow.participants import StudentAgent, ExpertAgent
 from student_expert_flow.config import load_config
 from student_expert_flow.runner import run_dialogue
 # Import the structured output model for type checking
@@ -31,10 +31,11 @@ def find_latest_transcript(transcript_dir: str = TRANSCRIPT_DIR) -> Optional[str
     """Finds the most recently created transcript file (excluding summaries) in the directory."""
     if not os.path.isdir(transcript_dir):
         return None
-    # Get all potentially matching files
-    all_files = glob.glob(os.path.join(transcript_dir, 'transcript_*.txt'))
-    # Filter out summary files
-    transcript_files = [f for f in all_files if not f.endswith('.summary.txt')]
+    # Get all potentially matching markdown files
+    all_files = glob.glob(os.path.join(transcript_dir, 'transcript_*.md'))
+    # Ensure summary files (even if .md) are filtered out if naming convention changes
+    transcript_files = [f for f in all_files if not f.endswith(
+        '.summary.txt') and not f.endswith('.summary.md')]
 
     if not transcript_files:
         return None
@@ -50,7 +51,7 @@ def assert_transcript_created(start_time):
     # Wait a very short time to allow file system to update
     time.sleep(0.5)
     latest_transcript = find_latest_transcript()
-    assert latest_transcript is not None, f"No transcript file found in {TRANSCRIPT_DIR}"
+    assert latest_transcript is not None, f"No transcript file found in {TRANSCRIPT_DIR} matching pattern *.md"
     assert os.path.exists(
         latest_transcript), f"Latest transcript {latest_transcript} does not exist"
     # Check if the file was created after the test started (basic check)
@@ -63,10 +64,10 @@ def assert_transcript_created(start_time):
         f"\n--- Verified Transcript Creation: {os.path.basename(latest_transcript)} ---")
 
     # --- Assert Summary Creation --- #
-    # Construct summary path correctly (replace .txt with .summary.txt)
+    # Construct summary path correctly (expecting .summary.txt, base is .md)
     base_path, ext = os.path.splitext(latest_transcript)
+    # Ensure we handle the case where splitext might capture the dot, ext will be '.md'
     summary_file_path = base_path + ".summary.txt"
-    # summary_file_path = latest_transcript.replace(".txt", ".summary.txt") # Alternative way
 
     # --- DEBUG PRINTS --- #
     print(f"DEBUG: latest_transcript = {latest_transcript}")

@@ -56,7 +56,8 @@ class StudentAgent:
 
         default_instructions = (
             "You are a student trying to achieve a specific learning goal.\n"
-            "Ask clear questions to the expert to gather the information you need.\n"
+            "If you need more information, ask the expert for more information.\n"
+            "If the expert asks you a question, answer it to the best of your ability - they want to help you achieve your goal.\n"
             "Evaluate the expert's responses against your goal.\n"
             "Use the required JSON format for your response."
         )

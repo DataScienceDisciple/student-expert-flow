@@ -2,7 +2,7 @@ import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock
 
-from student_expert_flow.agents import StudentAgent, ExpertAgent
+from student_expert_flow.participants import StudentAgent, ExpertAgent
 from student_expert_flow.config import load_config
 from student_expert_flow.runner import run_dialogue
 from agents import Runner

@@ -27,36 +27,98 @@ def _sanitize_filename(text: str, max_len: int = 50) -> str:
 
 
 def format_transcript(history: List[Dict[str, Any]], goal: str) -> str:
-    """Formats the conversation history into a readable string."""
-    lines = [f"--- Conversation Transcript ---"]
-    lines.append(f"Goal: {goal}")
-    lines.append(f"Timestamp: {datetime.datetime.now().isoformat()}")
-    lines.append("-" * 30 + "\n")
+    """Formats the conversation history into a readable Markdown string."""
+    lines = [f"# Conversation Transcript"]
+    lines.append(f"\n## Goal\n> {goal}")
+    lines.append(f"\n## Timestamp\n> {datetime.datetime.now().isoformat()}")
+    lines.append("\n---\n")
 
-    for entry in history:
+    turn_number = 0
+    i = 0
+    while i < len(history):
+        entry = history[i]
         role = entry.get('role', 'unknown_role')
-        # Default to System if agent missing
         agent = entry.get('agent', 'System')
-        content = entry.get('content', '')
+        # Strip leading/trailing whitespace
+        content = entry.get('content', '').strip()
         used_search = entry.get('used_web_search')
+        goal_achieved = entry.get('goal_achieved_flag')
 
-        prefix = f"[{agent} ({role})]"
-        search_suffix = f" [Used Web Search: {used_search}]" if used_search is not None else ""
+        prefix = f"**[{agent} ({role})]**"
+        metadata_line = ""
+        if used_search is not None:
+            metadata_line += f"*Used Web Search: {used_search}*  "
+        if goal_achieved is not None:
+            metadata_line += f"*Goal Achieved: {goal_achieved}*"
+        metadata_line = metadata_line.strip()
 
-        lines.append(f"{prefix}: {content}{search_suffix}")
+        # Format content with blockquotes, handle multi-line content
+        formatted_content = "\n".join(
+            [f"> {line}" for line in content.split('\n')])
 
-    lines.append("\n" + "-" * 30)
+        # Handle the initial system message
+        if agent == 'System' and role == 'user':
+            lines.append(f"{prefix}\n{formatted_content}")
+            if metadata_line:
+                lines.append(f">\n> _{metadata_line}_")
+            lines.append("\n---\n")  # Separator after system message
+            i += 1
+            continue
+
+        # Start a new turn when we see the expert (assistant role)
+        # Note: Assuming expert is always 'assistant' and student is 'user' in the log for turn structure
+        if role == 'assistant':
+            turn_number += 1
+            lines.append(f"## Turn {turn_number}")
+            lines.append(f"\n{prefix}\n{formatted_content}")
+            if metadata_line:
+                lines.append(f">\n> _{metadata_line}_")
+            i += 1
+            # Check if the next message is the student's response in this turn
+            if i < len(history) and history[i].get('role') == 'user':
+                student_entry = history[i]
+                student_role = student_entry.get('role', 'unknown_role')
+                student_agent = student_entry.get(
+                    'agent', 'Student')  # Assume name might vary
+                student_content = student_entry.get('content', '').strip()
+                student_goal_achieved = student_entry.get('goal_achieved_flag')
+                student_prefix = f"**[{student_agent} ({student_role})]**"
+                student_metadata_line = ""
+                if student_goal_achieved is not None:
+                    student_metadata_line += f"*Goal Achieved: {student_goal_achieved}*"
+                student_metadata_line = student_metadata_line.strip()
+
+                student_formatted_content = "\n".join(
+                    [f"> {line}" for line in student_content.split('\n')])
+
+                lines.append(
+                    f"\n{student_prefix}\n{student_formatted_content}")
+                if student_metadata_line:
+                    lines.append(f">\n> _{student_metadata_line}_")
+                i += 1
+            lines.append("\n---\n")  # Separator after each turn
+        else:
+            # Handle cases where conversation might not follow strict Expert->Student pattern
+            # Or if it starts unexpectedly with the student (print it anyway).
+            # Increment turn number for log clarity
+            lines.append(f"## Turn {turn_number+1} (Unexpected Start)")
+            lines.append(f"\n{prefix}\n{formatted_content}")
+            if metadata_line:
+                lines.append(f">\n> _{metadata_line}_")
+            lines.append("\n---\n")
+            i += 1
+
     lines.append("--- End Transcript ---")
     return "\n".join(lines)
 
 
 def save_transcript(history: List[Dict[str, Any]], goal: str, formatted_transcript: str, output_dir: str = "transcripts") -> str:
-    """Saves the formatted conversation history to a file.
+    """Saves the formatted conversation history to a Markdown file.
 
     Args:
         history: The conversation history list (used for metadata/unused here but kept for potential future use).
         goal: The student's learning goal (used for filename).
-        formatted_transcript: The pre-formatted transcript string to save.
+        formatted_transcript: The pre-formatted transcript string (assumed Markdown) to save.
         output_dir: The directory to save the transcript in . Defaults to 'transcripts'.
 
     Returns:
@@ -68,7 +130,8 @@ def save_transcript(history: List[Dict[str, Any]], goal: str, formatted_transcri
     # Generate filename
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     sanitized_goal = _sanitize_filename(goal)
-    filename = f"transcript_{timestamp}_{sanitized_goal}.txt"
+    # Changed extension to .md
+    filename = f"transcript_{timestamp}_{sanitized_goal}.md"
     filepath = os.path.join(output_dir, filename)
 
     # Write to file
@@ -76,7 +139,7 @@ def save_transcript(history: List[Dict[str, Any]], goal: str, formatted_transcri
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(formatted_transcript)
         # Optional: Log or print confirmation
-        print(f"Transcript saved to: {filepath}")
+        print(f"Transcript saved to Markdown: {filepath}")  # Updated message
         return filepath
     except IOError as e:
         print(f"Error saving transcript to {filepath}: {e}")

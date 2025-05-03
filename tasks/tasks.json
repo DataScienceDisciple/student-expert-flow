@@ -112,7 +112,7 @@
       "id": 10,
       "title": "Implement basic CLI interface",
       "description": "Create a command-line interface for running the tool",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         6
       ],

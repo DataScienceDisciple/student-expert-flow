@@ -1,89 +1,69 @@
-# Student-Expert Flow
+# Student-Expert Flow CLI
 
-A project demonstrating a dialogue flow between a 'student' agent learning a topic and an 'expert' agent providing information, using the `openai-agents-python` library. The Student agent uses structured JSON output.
+This tool facilitates dialogues between a 'student' AI agent learning a topic and an 'expert' AI agent providing information, leveraging the `openai-agents-python` library. The student agent typically has a learning goal, and the conversation continues until the goal is met or a maximum number of turns is reached.
+
+## Features
+
+- Run AI-driven dialogues based on configurable agent roles and goals.
+- Utilizes OpenAI models via the `openai-agents-python` SDK.
+- Supports structured JSON output from the student agent to assess goal completion.
+- Integrates web search for the expert agent to fetch up-to-date information.
+- Saves full conversation transcripts in Markdown format (`.md`) and generates concise summaries.
+- Configurable via YAML files for agent parameters (instructions, model, goal, etc.).
 
 ## Setup
 
-1. Clone the repository.
-2. Ensure you have Poetry installed. If not, follow the installation instructions [here](https://python-poetry.org/docs/#installation).
-3. Navigate to the project directory and install dependencies:
-   ```bash
-   poetry install
-   ```
-4. Create a `.env` file in the project root (see Configuration section below) and add your API key.
-5. Activate the virtual environment managed by Poetry:
-   ```bash
-   poetry shell
-   ```
-
-## Project Structure
-
-- `configs/`: Contains YAML configuration files for agents.
-  - `expert_config.yaml`: Default configuration for the Expert agent.
-  - `student_config.yaml`: Default configuration for the Student agent.
-  - `expert_config_simple.yaml`: Simple expert config for testing.
-  - `student_config_simple.yaml`: Simple student config for testing.
-- `student_expert_flow/`: Main package directory.
-  - `config.py`: Loads and validates YAML configuration using Pydantic.
-  - `models.py`: Defines Pydantic models for structured data (e.g., `StudentOutput`).
-  - `agents.py`: Contains the `ExpertAgent` and `StudentAgent` class implementations.
-  - `runner.py`: Contains the `run_dialogue` function implementing the conversation flow using `agents.Runner`.
-- `tests/`: Contains unit and integration tests.
-  - `test_config.py`: Tests for configuration loading.
-  - `test_agents.py`: Tests for agent initialization logic.
-  - `test_runner.py`: Mocked tests for the dialogue runner logic.
-  - `test_runner_integration.py`: Integration tests making real API calls.
-- `.env`: (You create this) Environment variables, primarily for API keys.
-- `.gitignore`: Specifies intentionally untracked files.
-- `pyproject.toml`: Poetry project configuration and dependencies.
-- `README.md`: This file.
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository_url>
+    cd student-expert-flow
+    ```
+2.  **Install Poetry:**
+    If you don't have Poetry, follow the installation instructions [here](https://python-poetry.org/docs/#installation).
+3.  **Install Dependencies:**
+    ```bash
+    poetry install
+    ```
+    This command also installs the `student-expert-flow` CLI tool within the virtual environment.
+4.  **Configure API Key:**
+    Create a `.env` file in the project root and add your OpenAI API key:
+    ```dotenv
+    # .env
+    OPENAI_API_KEY="YOUR_ACTUAL_API_KEY"
+    ```
+5.  **Activate Environment:**
+    ```bash
+    poetry shell
+    ```
 
 ## Configuration
 
-Agent behavior is configured using YAML files located in the `configs/` directory.
-
-- **API Key:** The primary way to provide the API key (e.g., `OPENAI_API_KEY`) is via a `.env` file in the project root:
-  ```dotenv
-  OPENAI_API_KEY="YOUR_ACTUAL_API_KEY"
-  ```
-  The integration tests load this file using `python-dotenv`. The SDK may also pick up keys directly from environment variables.
-- **Agent Params:** YAML files define parameters like `name`, `instructions`, `model`, `goal`, etc.
-- **Structured Output:** The `StudentAgent` is configured to return a JSON object matching the `StudentOutput` model defined in `student_expert_flow/models.py`.
-
-Sample configurations are provided. You can modify these or create new ones.
+- **Agents:** Agent behavior (name, instructions, model, goal, tools) is defined in YAML files within the `configs/` directory. Modify existing examples or create new ones.
+- **API Key:** Loaded from the `.env` file (or environment variables).
 
 ## Usage
 
-The core dialogue logic is implemented in `student_expert_flow/runner.py`. Currently, there is no direct command-line interface (CLI) entry point to run a dialogue easily. The main way to execute the dialogue is via the integration tests.
+Once the setup is complete and the environment is activated (`poetry shell`), you can run dialogues using the `student-expert-flow` command.
 
-### Running Tests
-
-**Standard Tests (Mocked):**
-
-These tests verify the application logic without making real API calls.
+**Basic Command:**
 
 ```bash
-poetry run pytest
+student-expert-flow --student-config <path_to_student.yaml> --expert-config <path_to_expert.yaml>
 ```
 
-**Integration Tests (Real API Calls):**
+**Arguments:**
 
-These tests run the actual dialogue flow using the configured language model, making real API calls.
+- `--student-config` (Required): Path to the Student agent's YAML configuration file (e.g., `configs/student_config.yaml`).
+- `--expert-config` (Required): Path to the Expert agent's YAML configuration file (e.g., `configs/expert_config.yaml`).
+- `--max-turns` (Optional): Maximum number of dialogue turns. Defaults to 5.
+- `--output-dir` (Optional): Directory to save conversation transcripts (as `.md`) and summaries (as `.txt`). Defaults to `transcripts/`.
 
-**Requirements:**
+**Example:**
 
-- API Key configured in `.env` file or environment variables (see Configuration section).
-- You can optionally control the number of turns the integration test runs using the `INTEGRATION_MAX_TURNS` environment variable (defaults to the value set in the test code, currently 2). Example: `export INTEGRATION_MAX_TURNS=3`
-- These tests will incur API costs and take longer to run.
-
-To run only the integration tests (shows dialogue output):
+Run a dialogue using the newsletter agent configurations, limit to 3 turns, and save output to `results/`:
 
 ```bash
-poetry run pytest -m integration -s
+student-expert-flow --student-config configs/student_newsletter_config.yaml --expert-config configs/expert_newsletter_config.yaml --max-turns 3 --output-dir results
 ```
 
-To run all tests _except_ integration tests:
-
-```bash
-poetry run pytest -m "not integration"
-```
+The dialogue will run in your terminal, and the transcript/summary files will be saved to the specified output directory upon completion.

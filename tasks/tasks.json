@@ -136,7 +136,7 @@
       "id": 12,
       "title": "Implement error handling and logging",
       "description": "Add robust error handling and logging throughout the application",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         10
       ],

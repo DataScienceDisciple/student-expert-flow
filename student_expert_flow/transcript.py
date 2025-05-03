@@ -139,10 +139,10 @@ def save_transcript(history: List[Dict[str, Any]], goal: str, formatted_transcri
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(formatted_transcript)
         # Optional: Log or print confirmation
-        print(f"Transcript saved to Markdown: {filepath}")  # Updated message
+        logger.info(f"Transcript saved to Markdown: {filepath}")
         return filepath
     except IOError as e:
-        print(f"Error saving transcript to {filepath}: {e}")
+        logger.error(f"Error saving transcript to {filepath}: {e}")
         # Consider raising the exception or returning None depending on desired error handling
         raise  # Re-raise the exception for now
 

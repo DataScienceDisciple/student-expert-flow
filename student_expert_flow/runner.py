@@ -25,7 +25,7 @@ async def run_dialogue(student: StudentAgent, expert: ExpertAgent, max_turns: in
     The flow is: System Goal -> Expert -> Student -> Expert -> Student ...
     """
 
-    print(
+    logger.info(
         f"--- Starting Dialogue --- Goal: {student.config.goal} --- Max Turns: {max_turns} ---")
 
     # Initialize conversation input with the student's goal, framed as a user request to the expert.
@@ -45,7 +45,7 @@ async def run_dialogue(student: StudentAgent, expert: ExpertAgent, max_turns: in
 
     while current_turn < max_turns:
         current_turn += 1
-        print(f"\n--- Turn {current_turn} ---")
+        logger.info(f"--- Turn {current_turn} ---")
 
         # --- Expert Turn --- #
         # Ensure conversation_input is not empty before expert turn
@@ -54,13 +54,13 @@ async def run_dialogue(student: StudentAgent, expert: ExpertAgent, max_turns: in
                 "Error: Conversation input became empty before expert turn.")
             break
 
-        print(
+        logger.info(
             f"Running Expert ({expert.config.name})... Input: {conversation_input[-1]['content']}")
         try:
             expert_result: RunResult = await Runner.run(expert.agent, input=conversation_input)
             # Ensure it's a string
             expert_response = str(expert_result.final_output)
-            print(f"Expert ({expert.config.name}): {expert_response}")
+            logger.info(f"Expert ({expert.config.name}): {expert_response}")
 
             # Check for web search tool usage
             expert_used_web_search_this_turn = False
@@ -92,12 +92,14 @@ async def run_dialogue(student: StudentAgent, expert: ExpertAgent, max_turns: in
 
         except Exception as e:
             logger.error(f"Error during Expert turn {current_turn}: {e}")
-            print(f"Error during Expert turn {current_turn}: {e}")
+            # Optionally add a user-facing print here? For now, rely on logger.
+            # print(f"Error during Expert turn {current_turn}: {e}")
             break  # Exit loop on error
 
         # --- Check for Max Turns AFTER Expert --- #
         if current_turn == max_turns:
-            print(f"\n--- Dialogue End (Max Turns Reached: {max_turns}) --- ")
+            logger.info(
+                f"--- Dialogue End (Max Turns Reached: {max_turns}) --- ")
             break  # Exit loop before the final student turn
 
         # --- Student Turn --- #
@@ -107,7 +109,7 @@ async def run_dialogue(student: StudentAgent, expert: ExpertAgent, max_turns: in
                 "Error: Conversation input became empty before student turn.")
             break
 
-        print(
+        logger.info(
             f"Running Student ({student.config.name})... Input: {conversation_input[-1]['content']}")
         try:
             student_result: RunResult = await Runner.run(student.agent, input=conversation_input)
@@ -118,13 +120,13 @@ async def run_dialogue(student: StudentAgent, expert: ExpertAgent, max_turns: in
                     f"Student agent did not return expected StudentOutput object. Got: {type(student_result.final_output)}")
                 student_response_content = str(student_result.final_output)
                 goal_achieved = False  # Assume goal not achieved if format is wrong
-                print(
+                logger.info(
                     f"Student ({student.config.name}) [Fallback]: {student_response_content}")
             else:
                 student_output: StudentOutput = student_result.final_output
                 student_response_content = student_output.response_content
                 goal_achieved = student_output.is_goal_achieved
-                print(
+                logger.info(
                     f"Student ({student.config.name}) [Goal Achieved: {goal_achieved}]: {student_response_content}")
 
             # Add student response to full history log
@@ -142,24 +144,27 @@ async def run_dialogue(student: StudentAgent, expert: ExpertAgent, max_turns: in
 
         except Exception as e:
             logger.error(f"Error during Student turn {current_turn}: {e}")
-            print(f"Error during Student turn {current_turn}: {e}")
+            # Optionally add a user-facing print here? For now, rely on logger.
+            # print(f"Error during Student turn {current_turn}: {e}")
             break  # Exit loop on error
 
         # Check for goal achievement AFTER student turn
         if goal_achieved:
-            print(
+            logger.info(
                 f"--- Dialogue End (Goal Achieved according to Student on Turn {current_turn}) --- ")
             break
 
     else:  # Loop finished without break (max_turns reached)
-        print(f"\n--- Dialogue End (Max Turns Reached: {max_turns}) --- ")
+        logger.info(f"--- Dialogue End (Max Turns Reached: {max_turns}) --- ")
 
-    print("\n--- Full Conversation History Log ---")
+    # Log the full history at DEBUG level instead of printing
+    logger.debug("--- Full Conversation History Log ---")
     for entry in full_history:
-        # Adjusting print format slightly for clarity
-        print(
+        logger.debug(
             f"[{entry.get('agent', 'System')} ({entry['role']})]: {entry['content']}" +
-            (f" [Used Web Search: {entry.get('used_web_search')}]" if 'used_web_search' in entry else "")
+            (f" [Used Web Search: {entry.get('used_web_search')}]" if 'used_web_search' in entry else "") +
+            # Also log goal flag
+            (f" [Goal Achieved Flag: {entry.get('goal_achieved_flag')}]" if 'goal_achieved_flag' in entry else "")
         )
 
     # --- Save Transcript --- #

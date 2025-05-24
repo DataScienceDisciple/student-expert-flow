@@ -7,9 +7,16 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Initialize AsyncOpenAI client at module level
-# Relies on OPENAI_API_KEY environment variable
-async_openai_client = AsyncOpenAI()
+# Initialize AsyncOpenAI client lazily to avoid issues with .env loading
+async_openai_client = None
+
+
+def get_async_openai_client():
+    """Get or create the AsyncOpenAI client instance."""
+    global async_openai_client
+    if async_openai_client is None:
+        async_openai_client = AsyncOpenAI()
+    return async_openai_client
 
 
 def _sanitize_filename(text: str, max_len: int = 50) -> str:
@@ -159,8 +166,8 @@ async def generate_summary(formatted_transcript: str, model: str = "gpt-4.1-mini
     """
     logger.info(f"Generating summary using model: {model}")
     try:
-        # Use the module-level client instance
-        client = async_openai_client
+        # Use the lazy-initialized client instance
+        client = get_async_openai_client()
 
         system_prompt = ("You are an expert summarizer. Please provide a concise summary of the following conversation transcript. "
                          "Highlight the main topic or goal, key points discussed, and whether the student's learning goal was achieved."
